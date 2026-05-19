@@ -19,7 +19,16 @@ FREESPINS_AWARDED_ON_RETRIGGER = 5
 # representation (rendering M crates as a visible symbol) is deferred — only
 # the math contribution lands in C2-C.
 MULT_VALUES = {2: 35, 3: 25, 5: 18, 10: 12, 25: 6, 100: 3, 500: 1}
-MULTIPLIER_SPAWN_PROB = 0.25
+# C2-E tuning history (1k base / 200 bonus sims):
+#   iter 0: 0.25 + paytable×1.0 → bonus RTP 56.86% (undershoot)
+#   iter 1: 0.43 + paytable×1.0 → bonus RTP 106.88% (close)
+#   iter 2: 0.39 + paytable×1.0, dropped wincap/freegame distros from base
+#           → base RTP 28.20%, bonus 113.74%
+#   iter 3: 0.39 + paytable×3.5 → base RTP 98.70% (+2.2%), bonus 396.43% (way over)
+#   iter 4: 0.10 + paytable×3.5 → measuring
+# Multiplier-spawn-prob and paytable scale are roughly orthogonal levers:
+# base RTP scales with paytable, bonus RTP additionally scales with mult.
+MULTIPLIER_SPAWN_PROB = 0.10
 
 
 class GameExecutables(GameCalculations):

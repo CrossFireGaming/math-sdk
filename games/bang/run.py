@@ -20,10 +20,11 @@ if __name__ == "__main__":
     compression = False  # readable JSON output during scaffolding
     profiling = False
 
-    # Tiny smoke-test counts. Bump back up once C2 lands the real mechanics.
+    # C2-E first scaling pass — enough sims to see RTP converge but quick
+    # enough to iterate paytable/reels in seconds rather than minutes.
     num_sim_args = {
-        "base": int(5),
-        "bonus": int(5),
+        "base": int(1e3),
+        "bonus": int(200),
     }
 
     # Optimization off during scaffolding — runs faster, and tuning the
