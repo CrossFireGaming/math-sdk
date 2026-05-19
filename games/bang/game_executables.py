@@ -1,5 +1,6 @@
 from game_calculations import GameCalculations
 from src.calculations.cluster import Cluster
+from src.calculations.statistics import get_random_outcome
 from game_events import update_grid_mult_event
 from src.events.events import update_freespin_event
 
@@ -9,6 +10,16 @@ from src.events.events import update_freespin_event
 DESTRUCTION_TRIGGER_THRESHOLD = 50
 FREESPINS_AWARDED_ON_TRIGGER = 10
 FREESPINS_AWARDED_ON_RETRIGGER = 5
+
+# BANG bonus-round TNT-Crate multiplier collection (GDD §5).
+# C2-C math-only implementation: each free spin has MULTIPLIER_SPAWN_PROB
+# chance to "land" a TNT-Crate multiplier with value sampled from MULT_VALUES.
+# Values accumulate into self.bonus_multiplier_sum across the round; at
+# end_freespin the freegame total is multiplied by max(1, sum). The board
+# representation (rendering M crates as a visible symbol) is deferred — only
+# the math contribution lands in C2-C.
+MULT_VALUES = {2: 35, 3: 25, 5: 18, 10: 12, 25: 6, 100: 3, 500: 1}
+MULTIPLIER_SPAWN_PROB = 0.25
 
 
 class GameExecutables(GameCalculations):
@@ -71,16 +82,28 @@ class GameExecutables(GameCalculations):
         # re-trigger when it hits the threshold.
         self.spin_destruction_count = 0
 
+        # BANG C2-C: roll for a TNT-Crate multiplier spawn this spin.
+        # If hit, add its value to the running bonus_multiplier_sum;
+        # applied to the freegame total in end_freespin.
+        if get_random_outcome({0: 1 - MULTIPLIER_SPAWN_PROB, 1: MULTIPLIER_SPAWN_PROB}) == 1:
+            value = get_random_outcome(MULT_VALUES)
+            if not hasattr(self, "bonus_multiplier_sum"):
+                self.bonus_multiplier_sum = 0
+            self.bonus_multiplier_sum += value
+
     # ---- Destruction-count freespin trigger (replaces scatter-based) ----
 
     def check_fs_condition(self, scatter_key: str = "scatter") -> bool:
         """BANG: bonus triggers when ≥50 cells were destroyed in this spin's
-        full cascade chain (see GDD §5). Replaces the SDK's scatter-count check.
+        full cascade chain (GDD §5), OR when the current bet-mode distribution
+        sets force_freegame (bonus buy path — the player paid for direct entry).
+        Replaces the SDK's scatter-count check.
         """
-        if (
-            getattr(self, "spin_destruction_count", 0) >= DESTRUCTION_TRIGGER_THRESHOLD
-            and not self.repeat
-        ):
+        if self.repeat:
+            return False
+        if getattr(self, "spin_destruction_count", 0) >= DESTRUCTION_TRIGGER_THRESHOLD:
+            return True
+        if self.get_current_distribution_conditions().get("force_freegame"):
             return True
         return False
 
@@ -105,3 +128,24 @@ class GameExecutables(GameCalculations):
         +5 spins (GDD §5)."""
         if getattr(self, "spin_destruction_count", 0) >= DESTRUCTION_TRIGGER_THRESHOLD:
             self.tot_fs += FREESPINS_AWARDED_ON_RETRIGGER
+
+    def end_freespin(self) -> None:
+        """BANG: apply collected TNT-Crate multipliers to the freegame total
+        before emitting the freespin-end event (GDD §5).
+
+        freegame_total *= max(1, sum_of_collected_multipliers)
+
+        max(1, ...) preserves the unmultiplied total when no multipliers
+        landed during the round, matching Sweet Bonanza convention.
+        """
+        mult_sum = getattr(self, "bonus_multiplier_sum", 0)
+        if mult_sum > 0 and self.win_manager.freegame_wins > 0:
+            original = self.win_manager.freegame_wins
+            multiplied = original * mult_sum
+            delta = multiplied - original
+            self.win_manager.freegame_wins = multiplied
+            self.win_manager.running_bet_win += delta
+            # Wincap is enforced in update_final_win via min(...); no need to
+            # clamp here (and we want the books to reflect the raw multiplied
+            # value so the frontend can render the actual collected total).
+        super().end_freespin()

@@ -154,21 +154,22 @@ class GameConfig(Config):
                 auto_close_disabled=False,
                 is_feature=True,
                 is_buybonus=True,
-                # C1: bonus mode is a placeholder that runs like base. The real
-                # "bonus buy directly enters freespins" mechanic needs the
-                # destruction-count trigger to land in C2 (force_freegame=True
-                # currently loops forever waiting on a scatter trigger that
-                # BANG doesn't have). The criteria name is kept as "freegame"
-                # only to satisfy opt_params verification.
+                # Bonus buy: every sim forces a free-spins round (C2-B's
+                # check_fs_condition honors force_freegame, so each bonus sim
+                # immediately enters the 10-FS bonus regardless of the spin's
+                # destruction count).
                 distributions=[
                     Distribution(
                         criteria="freegame",
                         quota=1.0,
                         conditions={
-                            "reel_weights": {self.basegame_type: {"BR0": 1}},
+                            "reel_weights": {
+                                self.basegame_type: {"BR0": 1},
+                                self.freegame_type: {"FR0": 1},
+                            },
                             "scatter_triggers": {0: 1},
                             "force_wincap": False,
-                            "force_freegame": False,
+                            "force_freegame": True,
                         },
                     ),
                 ],

@@ -20,6 +20,9 @@ class GameStateOverride(GameExecutables):
     def reset_fs_spin(self):
         super().reset_fs_spin()
         self.reset_grid_mults()
+        # BANG C2-C: reset the TNT-Crate multiplier sum at the start of
+        # every bonus round (multipliers don't persist across rounds).
+        self.bonus_multiplier_sum = 0
 
     def assign_special_sym_function(self):
         pass
