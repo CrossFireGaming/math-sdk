@@ -21,8 +21,6 @@ if __name__ == "__main__":
     profiling = False
 
     # Tiny smoke-test counts. Bump back up once C2 lands the real mechanics.
-    # With 4-min cluster + gem-dense reels, cascades chain long and per-sim
-    # time is high until we tune the reels.
     num_sim_args = {
         "base": int(5),
         "bonus": int(5),
@@ -34,7 +32,9 @@ if __name__ == "__main__":
         "run_sims": True,
         "run_optimization": False,
         "run_analysis": True,
-        "run_format_checks": True,
+        # Format checks expect compressed books (.zst) which we don't produce
+        # while compression=False. Re-enable for the first production run.
+        "run_format_checks": False,
     }
     target_modes = ["base", "bonus"]
 

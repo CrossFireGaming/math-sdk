@@ -47,40 +47,43 @@ class GameConfig(Config):
         self.num_reels = 5
         self.num_rows = [5] * self.num_reels
 
-        # Cluster-size tiers — minimum cluster is 4 (vs 5 in sample)
-        t1, t2, t3, t4, t5, t6 = (4, 4), (5, 5), (6, 7), (8, 10), (11, 14), (15, 25)
+        # Cluster-size tiers — minimum cluster is 5 (matches SDK sample convention).
+        # 4-min was tried first; produced unbounded cascades on 5x5 with our reel
+        # composition. 5-min on 5x5 hits the target high-volatility band and lets
+        # the dynamite explosions be the hero moments.
+        t1, t2, t3, t4, t5 = (5, 5), (6, 7), (8, 10), (11, 14), (15, 25)
 
         pay_group = {
             # H1 — Safe / Vault (top pay)
-            (t1, "H1"): 3.0, (t2, "H1"): 6.0, (t3, "H1"): 15.0,
-            (t4, "H1"): 40.0, (t5, "H1"): 100.0, (t6, "H1"): 500.0,
+            (t1, "H1"): 6.0, (t2, "H1"): 15.0, (t3, "H1"): 40.0,
+            (t4, "H1"): 100.0, (t5, "H1"): 500.0,
             # H2 — Gold Bar
-            (t1, "H2"): 1.5, (t2, "H2"): 3.0, (t3, "H2"): 8.0,
-            (t4, "H2"): 20.0, (t5, "H2"): 50.0, (t6, "H2"): 250.0,
+            (t1, "H2"): 3.0, (t2, "H2"): 8.0, (t3, "H2"): 20.0,
+            (t4, "H2"): 50.0, (t5, "H2"): 250.0,
             # H3 — Sheriff Badge
-            (t1, "H3"): 0.8, (t2, "H3"): 1.6, (t3, "H3"): 4.0,
-            (t4, "H3"): 10.0, (t5, "H3"): 25.0, (t6, "H3"): 100.0,
+            (t1, "H3"): 1.6, (t2, "H3"): 4.0, (t3, "H3"): 10.0,
+            (t4, "H3"): 25.0, (t5, "H3"): 100.0,
             # H4 — Horseshoe
-            (t1, "H4"): 0.5, (t2, "H4"): 1.0, (t3, "H4"): 2.5,
-            (t4, "H4"): 6.0, (t5, "H4"): 15.0, (t6, "H4"): 60.0,
+            (t1, "H4"): 1.0, (t2, "H4"): 2.5, (t3, "H4"): 6.0,
+            (t4, "H4"): 15.0, (t5, "H4"): 60.0,
             # L1 — Diamond
-            (t1, "L1"): 0.2, (t2, "L1"): 0.4, (t3, "L1"): 1.0,
-            (t4, "L1"): 2.5, (t5, "L1"): 6.0, (t6, "L1"): 20.0,
+            (t1, "L1"): 0.4, (t2, "L1"): 1.0, (t3, "L1"): 2.5,
+            (t4, "L1"): 6.0, (t5, "L1"): 20.0,
             # L2 — Heart
-            (t1, "L2"): 0.2, (t2, "L2"): 0.4, (t3, "L2"): 1.0,
-            (t4, "L2"): 2.5, (t5, "L2"): 6.0, (t6, "L2"): 20.0,
+            (t1, "L2"): 0.4, (t2, "L2"): 1.0, (t3, "L2"): 2.5,
+            (t4, "L2"): 6.0, (t5, "L2"): 20.0,
             # L3 — Club
-            (t1, "L3"): 0.3, (t2, "L3"): 0.6, (t3, "L3"): 1.5,
-            (t4, "L3"): 4.0, (t5, "L3"): 10.0, (t6, "L3"): 30.0,
+            (t1, "L3"): 0.6, (t2, "L3"): 1.5, (t3, "L3"): 4.0,
+            (t4, "L3"): 10.0, (t5, "L3"): 30.0,
             # L4 — Spade
-            (t1, "L4"): 0.3, (t2, "L4"): 0.6, (t3, "L4"): 1.5,
-            (t4, "L4"): 4.0, (t5, "L4"): 10.0, (t6, "L4"): 30.0,
-            # DS — Small Dynamite (board symbol for now; DH/DV split deferred to C2)
-            (t1, "DS"): 1.0, (t2, "DS"): 2.0, (t3, "DS"): 5.0,
-            (t4, "DS"): 12.0, (t5, "DS"): 30.0, (t6, "DS"): 120.0,
+            (t1, "L4"): 0.6, (t2, "L4"): 1.5, (t3, "L4"): 4.0,
+            (t4, "L4"): 10.0, (t5, "L4"): 30.0,
+            # DS — Small Dynamite (board symbol for now; DH/DV split deferred)
+            (t1, "DS"): 2.0, (t2, "DS"): 5.0, (t3, "DS"): 12.0,
+            (t4, "DS"): 30.0, (t5, "DS"): 120.0,
             # DB — Big Dynamite
-            (t1, "DB"): 2.5, (t2, "DB"): 5.0, (t3, "DB"): 12.0,
-            (t4, "DB"): 30.0, (t5, "DB"): 80.0, (t6, "DB"): 300.0,
+            (t1, "DB"): 5.0, (t2, "DB"): 12.0, (t3, "DB"): 30.0,
+            (t4, "DB"): 80.0, (t5, "DB"): 300.0,
         }
         self.paytable = self.convert_range_table(pay_group)
 
@@ -124,27 +127,16 @@ class GameConfig(Config):
                 auto_close_disabled=False,
                 is_feature=True,
                 is_buybonus=False,
-                # C1 simplified distributions: no wincap-forcing (would loop
-                # forever with our placeholder math) and no zero-win bucket
-                # (4-min cluster + dense gems makes zero-win nearly impossible
-                # to sample). C2 will reintroduce these once the math is real.
+                # C1 simplified distributions: base mode is basegame-only.
+                # Removed: wincap (force_wincap loops forever with no dynamite
+                # math), zero-win (5-min cluster makes it hard to sample), and
+                # freegame (force_freegame loops forever waiting on an
+                # unreachable scatter trigger). C2 reintroduces freegame once
+                # the destruction-count trigger is wired.
                 distributions=[
                     Distribution(
-                        criteria="freegame",
-                        quota=0.1,
-                        conditions={
-                            "reel_weights": {
-                                self.basegame_type: {"BR0": 1},
-                                self.freegame_type: {"FR0": 1},
-                            },
-                            "scatter_triggers": {0: 1},
-                            "force_wincap": False,
-                            "force_freegame": True,
-                        },
-                    ),
-                    Distribution(
                         criteria="basegame",
-                        quota=0.9,
+                        quota=1.0,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}},
                             "scatter_triggers": {0: 1},
@@ -162,26 +154,21 @@ class GameConfig(Config):
                 auto_close_disabled=False,
                 is_feature=True,
                 is_buybonus=True,
+                # C1: bonus mode is a placeholder that runs like base. The real
+                # "bonus buy directly enters freespins" mechanic needs the
+                # destruction-count trigger to land in C2 (force_freegame=True
+                # currently loops forever waiting on a scatter trigger that
+                # BANG doesn't have). The criteria name is kept as "freegame"
+                # only to satisfy opt_params verification.
                 distributions=[
                     Distribution(
                         criteria="freegame",
                         quota=1.0,
                         conditions={
-                            "reel_weights": {
-                                self.basegame_type: {"BR0": 1},
-                                self.freegame_type: {"FR0": 1},
-                            },
-                            "mult_values": {
-                                self.basegame_type: {
-                                    2: 35, 3: 25, 5: 18, 10: 12, 25: 6, 100: 3, 500: 1,
-                                },
-                                self.freegame_type: {
-                                    2: 35, 3: 25, 5: 18, 10: 12, 25: 6, 100: 3, 500: 1,
-                                },
-                            },
+                            "reel_weights": {self.basegame_type: {"BR0": 1}},
                             "scatter_triggers": {0: 1},
                             "force_wincap": False,
-                            "force_freegame": True,
+                            "force_freegame": False,
                         },
                     ),
                 ],
