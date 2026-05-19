@@ -18,15 +18,14 @@ FREESPINS_AWARDED_ON_RETRIGGER = 5
 # end_freespin the freegame total is multiplied by max(1, sum). The board
 # representation (rendering M crates as a visible symbol) is deferred — only
 # the math contribution lands in C2-C.
-# Designed for Eddie's target distribution: most bonuses pay ~50x,
-# bigger wins (200-1000x) possible, 50,000x cap reachable but very rare.
-# Math: raw bonus RTP (no mults) ≈ 6.63%, raw median ≈ 4x. Target total
-# 97% needs avg mult factor ~14.6. Median 50x needs almost every round
-# to get *some* multiplier — push spawn_prob higher with smaller average
-# values to compress the tail while keeping mean similar.
-# E[V] = 11.0, spawn_prob = 0.13 → mean factor = 14.3 ≈ target.
-# Most rounds (75%) get 1-2 mults → median sum ~10-15 → median bonus ~50x.
-MULT_VALUES = {3: 50, 5: 30, 10: 12, 30: 6, 100: 1.5, 500: 0.5, 10000: 0.01}
+# Eddie's bonus payout distribution wishlist (most around 50x, tiers
+# stepping up to 25,000-50,000x each rarer than the previous):
+# Strategy is to (1) lift raw freegame wins via FR0 re-weighting toward
+# high-pay symbols (see gen_placeholder_reels.py), and (2) keep mults
+# small and frequent so most rounds get a 2-10x boost on top, with rare
+# 500x / 5000x outliers and a single vanishingly-rare 50000x cap path
+# (the 5000 entry stacked + raw freegame can reach the cap).
+MULT_VALUES = {2: 40, 3: 25, 5: 18, 10: 10, 50: 5, 500: 1.99, 5000: 0.01}
 # Total weight ≈ 100. Mostly small (2-25), occasionally medium (100-500),
 # rare medium-big (2000), vanishingly rare huge (25000 at 0.01% weight).
 # Combined with spawn_prob 0.30 over 10 freespins: ~97% of rounds get at
@@ -41,7 +40,7 @@ MULT_VALUES = {3: 50, 5: 30, 10: 12, 30: 6, 100: 1.5, 500: 0.5, 10000: 0.01}
 #   iter 4: spawn=0.10, paytable×3.5 (1k/200)                  → base 98.70%, bonus 102%
 #   iter 5: spawn=0.10 + heavy-tail mults (1k/200)             → median 11x, 1% hit 50k cap (too frequent)
 #   iter 6: spawn=0.30 + refined tail + 50k wincap (50k/5k)    → measuring
-MULTIPLIER_SPAWN_PROB = 0.17
+MULTIPLIER_SPAWN_PROB = 0.03
 
 
 class GameExecutables(GameCalculations):

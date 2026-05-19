@@ -11,8 +11,10 @@ from src.write_data.write_configs import generate_configs
 
 if __name__ == "__main__":
 
-    # Iter 10 — quick tuning at 100k / 10k (~30s) to dial in spawn_prob.
-    # Drop back to 1M / 100k once we hit target band for final confidence.
+    # Iter 12 final — high-pay FR0 + spawn 0.03. Best balance found
+    # in iters 11-13 across the spawn/FR0 dimensions for Eddie's
+    # target distribution (most ~50x, tiered tails to 50,000x).
+    # 1M / 100k sims (~6 min) for proper RTP confidence.
     num_threads = 4
     rust_threads = 4
     batching_size = 10000
@@ -20,8 +22,8 @@ if __name__ == "__main__":
     profiling = False
 
     num_sim_args = {
-        "base": int(1e5),
-        "bonus": int(1e4),
+        "base": int(1e6),
+        "bonus": int(1e5),
     }
 
     # Optimization off during scaffolding — runs faster, and tuning the

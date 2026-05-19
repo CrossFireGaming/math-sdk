@@ -52,14 +52,14 @@ def main() -> None:
         "DS": 8,  "DB": 2,
     }
 
-    # Free-spins reel — slightly more dynamite than base (15% DS, 4% DB
-    # vs 8%/2% on base) but not so dense that dynamite cascades blow out
-    # bonus RTP. Tried 30%/10% in iter 7 — bonus RTP hit 7000% from raw
-    # cascade chains alone, swamping the multiplier mechanism.
+    # Free-spins reel — high-pay-weighted to lift raw freegame wins so
+    # the multiplier mechanism can land Eddie's distribution shape (50x
+    # mode with tiered tails). Free spins feel meaningfully different
+    # from base — more action, bigger pays, more dynamite cascades.
     free_dist = {
-        "L1": 14, "L2": 14, "L3": 14, "L4": 14,
-        "H4": 8,  "H3": 7,  "H2": 6,  "H1": 4,
-        "DS": 15, "DB": 4,
+        "L1": 7, "L2": 7, "L3": 7, "L4": 7,
+        "H4": 15, "H3": 12, "H2": 9, "H1": 6,
+        "DS": 22, "DB": 8,
     }
 
     # Forced-max-win reel — heavy on Big Dyn + high pays to make chain-detonation
