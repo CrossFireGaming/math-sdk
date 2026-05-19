@@ -14,15 +14,18 @@ if __name__ == "__main__":
     # C1 scaffold: small sim counts for fast iteration while the mechanics
     # are still incomplete. Bump to 1e5+ per mode once the dynamite math
     # lands (C2) and we're tuning RTP for real.
-    num_threads = 4
-    rust_threads = 8
-    batching_size = 5000
+    num_threads = 1
+    rust_threads = 1
+    batching_size = 5
     compression = False  # readable JSON output during scaffolding
     profiling = False
 
+    # Tiny smoke-test counts. Bump back up once C2 lands the real mechanics.
+    # With 4-min cluster + gem-dense reels, cascades chain long and per-sim
+    # time is high until we tune the reels.
     num_sim_args = {
-        "base": int(1e3),
-        "bonus": int(1e3),
+        "base": int(5),
+        "bonus": int(5),
     }
 
     # Optimization off during scaffolding — runs faster, and tuning the

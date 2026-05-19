@@ -37,7 +37,10 @@ class GameConfig(Config):
         self.working_name = "BANG"
         self.wincap = 10000.0
         self.win_type = "cluster"
-        self.rtp = 0.9650
+        # C1 placeholder: 0.9700 to match the inherited opt_params condition sum.
+        # GDD target is 0.9650 base / 0.9700 bonus — will be enforced in C2 by
+        # tuning games/bang/game_optimization.py condition RTPs to sum to 0.965.
+        self.rtp = 0.9700
         self.construct_paths()
 
         # 5x5 board
@@ -121,20 +124,11 @@ class GameConfig(Config):
                 auto_close_disabled=False,
                 is_feature=True,
                 is_buybonus=False,
+                # C1 simplified distributions: no wincap-forcing (would loop
+                # forever with our placeholder math) and no zero-win bucket
+                # (4-min cluster + dense gems makes zero-win nearly impossible
+                # to sample). C2 will reintroduce these once the math is real.
                 distributions=[
-                    Distribution(
-                        criteria="wincap",
-                        quota=0.001,
-                        win_criteria=mode_maxwins["base"],
-                        conditions={
-                            "reel_weights": {
-                                self.basegame_type: {"BR0": 1},
-                                self.freegame_type: {"FR0": 1, "WCAP": 5},
-                            },
-                            "force_wincap": True,
-                            "force_freegame": True,
-                        },
-                    ),
                     Distribution(
                         criteria="freegame",
                         quota=0.1,
@@ -143,25 +137,17 @@ class GameConfig(Config):
                                 self.basegame_type: {"BR0": 1},
                                 self.freegame_type: {"FR0": 1},
                             },
+                            "scatter_triggers": {0: 1},
                             "force_wincap": False,
                             "force_freegame": True,
                         },
                     ),
                     Distribution(
-                        criteria="0",
-                        quota=0.4,
-                        win_criteria=0.0,
-                        conditions={
-                            "reel_weights": {self.basegame_type: {"BR0": 1}},
-                            "force_wincap": False,
-                            "force_freegame": False,
-                        },
-                    ),
-                    Distribution(
                         criteria="basegame",
-                        quota=0.5,
+                        quota=0.9,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}},
+                            "scatter_triggers": {0: 1},
                             "force_wincap": False,
                             "force_freegame": False,
                         },
@@ -178,13 +164,12 @@ class GameConfig(Config):
                 is_buybonus=True,
                 distributions=[
                     Distribution(
-                        criteria="wincap",
-                        quota=0.001,
-                        win_criteria=mode_maxwins["bonus"],
+                        criteria="freegame",
+                        quota=1.0,
                         conditions={
                             "reel_weights": {
                                 self.basegame_type: {"BR0": 1},
-                                self.freegame_type: {"FR0": 1, "WCAP": 5},
+                                self.freegame_type: {"FR0": 1},
                             },
                             "mult_values": {
                                 self.basegame_type: {
@@ -194,18 +179,7 @@ class GameConfig(Config):
                                     2: 35, 3: 25, 5: 18, 10: 12, 25: 6, 100: 3, 500: 1,
                                 },
                             },
-                            "force_wincap": True,
-                            "force_freegame": True,
-                        },
-                    ),
-                    Distribution(
-                        criteria="freegame",
-                        quota=0.999,
-                        conditions={
-                            "reel_weights": {
-                                self.basegame_type: {"BR0": 1},
-                                self.freegame_type: {"FR0": 1},
-                            },
+                            "scatter_triggers": {0: 1},
                             "force_wincap": False,
                             "force_freegame": True,
                         },
