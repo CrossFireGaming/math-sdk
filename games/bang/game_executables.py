@@ -18,17 +18,30 @@ FREESPINS_AWARDED_ON_RETRIGGER = 5
 # end_freespin the freegame total is multiplied by max(1, sum). The board
 # representation (rendering M crates as a visible symbol) is deferred — only
 # the math contribution lands in C2-C.
-MULT_VALUES = {2: 35, 3: 25, 5: 18, 10: 12, 25: 6, 100: 3, 500: 1}
-# C2-E tuning history (1k base / 200 bonus sims):
-#   iter 0: 0.25 + paytable×1.0 → bonus RTP 56.86% (undershoot)
-#   iter 1: 0.43 + paytable×1.0 → bonus RTP 106.88% (close)
-#   iter 2: 0.39 + paytable×1.0, dropped wincap/freegame distros from base
-#           → base RTP 28.20%, bonus 113.74%
-#   iter 3: 0.39 + paytable×3.5 → base RTP 98.70% (+2.2%), bonus 396.43% (way over)
-#   iter 4: 0.10 + paytable×3.5 → measuring
-# Multiplier-spawn-prob and paytable scale are roughly orthogonal levers:
-# base RTP scales with paytable, bonus RTP additionally scales with mult.
-MULTIPLIER_SPAWN_PROB = 0.10
+# Designed for Eddie's target distribution: most bonuses pay ~50x,
+# bigger wins (200-1000x) possible, 50,000x cap reachable but very rare.
+# Math: raw bonus RTP (no mults) ≈ 6.63%, raw median ≈ 4x. Target total
+# 97% needs avg mult factor ~14.6. Median 50x needs almost every round
+# to get *some* multiplier — push spawn_prob higher with smaller average
+# values to compress the tail while keeping mean similar.
+# E[V] = 11.0, spawn_prob = 0.13 → mean factor = 14.3 ≈ target.
+# Most rounds (75%) get 1-2 mults → median sum ~10-15 → median bonus ~50x.
+MULT_VALUES = {3: 50, 5: 30, 10: 12, 30: 6, 100: 1.5, 500: 0.5, 10000: 0.01}
+# Total weight ≈ 100. Mostly small (2-25), occasionally medium (100-500),
+# rare medium-big (2000), vanishingly rare huge (25000 at 0.01% weight).
+# Combined with spawn_prob 0.30 over 10 freespins: ~97% of rounds get at
+# least one multiplier; cumulative sum ~50-200x typical; 50,000x cap
+# requires either the 25000 outlier OR a stack of 2000s.
+
+# C2-E tuning history (sim counts in parentheses):
+#   iter 0: spawn=0.25, paytable×1, old mults (1k/200)         → bonus 56.86%
+#   iter 1: spawn=0.43, paytable×1, old mults (1k/200)         → bonus 106.88%
+#   iter 2: spawn=0.39, dropped wincap/freegame (1k/200)       → base 28.20%
+#   iter 3: spawn=0.39, paytable×3.5 (1k/200)                  → base 98.70%, bonus 396%
+#   iter 4: spawn=0.10, paytable×3.5 (1k/200)                  → base 98.70%, bonus 102%
+#   iter 5: spawn=0.10 + heavy-tail mults (1k/200)             → median 11x, 1% hit 50k cap (too frequent)
+#   iter 6: spawn=0.30 + refined tail + 50k wincap (50k/5k)    → measuring
+MULTIPLIER_SPAWN_PROB = 0.17
 
 
 class GameExecutables(GameCalculations):

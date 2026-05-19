@@ -35,7 +35,7 @@ class GameConfig(Config):
         self.game_id = "bang"
         self.provider_number = 0
         self.working_name = "BANG"
-        self.wincap = 10000.0
+        self.wincap = 50000.0
         self.win_type = "cluster"
         # C1 placeholder: 0.9700 to match the inherited opt_params condition sum.
         # GDD target is 0.9650 base / 0.9700 bonus — will be enforced in C2 by

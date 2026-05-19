@@ -11,22 +11,17 @@ from src.write_data.write_configs import generate_configs
 
 if __name__ == "__main__":
 
-    # C1 scaffold: small sim counts for fast iteration while the mechanics
-    # are still incomplete. Bump to 1e5+ per mode once the dynamite math
-    # lands (C2) and we're tuning RTP for real.
-    num_threads = 1
-    rust_threads = 1
-    batching_size = 5
-    compression = False  # readable JSON output during scaffolding
+    # Iter 10 — quick tuning at 100k / 10k (~30s) to dial in spawn_prob.
+    # Drop back to 1M / 100k once we hit target band for final confidence.
+    num_threads = 4
+    rust_threads = 4
+    batching_size = 10000
+    compression = False
     profiling = False
 
-    # Iteration speed: 1k / 200 sims runs in ~35s, sufficient signal for
-    # tuning the placeholder math. Confidence-checked at 10k / 1k (~5min):
-    # base 98.28%, bonus 93.35% — RTP stable within variance.
-    # Bump to 100k+ once C2-F (run_optimization=True) is configured.
     num_sim_args = {
-        "base": int(1e3),
-        "bonus": int(200),
+        "base": int(1e5),
+        "bonus": int(1e4),
     }
 
     # Optimization off during scaffolding — runs faster, and tuning the

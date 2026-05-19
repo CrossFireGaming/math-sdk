@@ -52,8 +52,10 @@ def main() -> None:
         "DS": 8,  "DB": 2,
     }
 
-    # Free-spins reel — more dynamites, less gem floor, no multiplier symbol
-    # yet (TNT-Crate `M` lands in C2 once collected-mult mechanic is wired).
+    # Free-spins reel — slightly more dynamite than base (15% DS, 4% DB
+    # vs 8%/2% on base) but not so dense that dynamite cascades blow out
+    # bonus RTP. Tried 30%/10% in iter 7 — bonus RTP hit 7000% from raw
+    # cascade chains alone, swamping the multiplier mechanism.
     free_dist = {
         "L1": 14, "L2": 14, "L3": 14, "L4": 14,
         "H4": 8,  "H3": 7,  "H2": 6,  "H1": 4,
