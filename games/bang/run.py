@@ -11,10 +11,7 @@ from src.write_data.write_configs import generate_configs
 
 if __name__ == "__main__":
 
-    # Iter 12 final — high-pay FR0 + spawn 0.03. Best balance found
-    # in iters 11-13 across the spawn/FR0 dimensions for Eddie's
-    # target distribution (most ~50x, tiered tails to 50,000x).
-    # 1M / 100k sims (~6 min) for proper RTP confidence.
+    # C2-G final confidence pass — 1M base / 100k bonus.
     num_threads = 4
     rust_threads = 4
     batching_size = 10000

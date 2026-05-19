@@ -23,6 +23,10 @@ class GameStateOverride(GameExecutables):
         # BANG C2-C: reset the TNT-Crate multiplier sum at the start of
         # every bonus round (multipliers don't persist across rounds).
         self.bonus_multiplier_sum = 0
+        # BANG C2-G: reset sticky dynamites at the start of every bonus
+        # round. Stickies persist across the 10 free spins (and any
+        # re-trigger spins) but not across rounds.
+        self.sticky_dynamites = []
 
     def assign_special_sym_function(self):
         pass

@@ -1,8 +1,8 @@
 from game_calculations import GameCalculations
 from src.calculations.cluster import Cluster
 from src.calculations.statistics import get_random_outcome
+from src.events.events import reveal_event, update_freespin_event
 from game_events import update_grid_mult_event
-from src.events.events import update_freespin_event
 
 
 # BANG bonus trigger: destroy this many cells in one spin's full cascade
@@ -18,14 +18,11 @@ FREESPINS_AWARDED_ON_RETRIGGER = 5
 # end_freespin the freegame total is multiplied by max(1, sum). The board
 # representation (rendering M crates as a visible symbol) is deferred — only
 # the math contribution lands in C2-C.
-# Eddie's bonus payout distribution wishlist (most around 50x, tiers
-# stepping up to 25,000-50,000x each rarer than the previous):
-# Strategy is to (1) lift raw freegame wins via FR0 re-weighting toward
-# high-pay symbols (see gen_placeholder_reels.py), and (2) keep mults
-# small and frequent so most rounds get a 2-10x boost on top, with rare
-# 500x / 5000x outliers and a single vanishingly-rare 50000x cap path
-# (the 5000 entry stacked + raw freegame can reach the cap).
-MULT_VALUES = {2: 40, 3: 25, 5: 18, 10: 10, 50: 5, 500: 1.99, 5000: 0.01}
+# C2-G with sticky dynamites doing the heavy lifting: stickies set the
+# median ~50x, mults only add the right-tail. Smaller spawn rate and
+# rarer extreme values than iter 11-12 because we no longer need mults
+# to lift median.
+MULT_VALUES = {2: 50, 3: 30, 5: 10, 10: 6, 50: 3, 500: 0.99, 5000: 0.01}
 # Total weight ≈ 100. Mostly small (2-25), occasionally medium (100-500),
 # rare medium-big (2000), vanishingly rare huge (25000 at 0.01% weight).
 # Combined with spawn_prob 0.30 over 10 freespins: ~97% of rounds get at
@@ -40,7 +37,7 @@ MULT_VALUES = {2: 40, 3: 25, 5: 18, 10: 10, 50: 5, 500: 1.99, 5000: 0.01}
 #   iter 4: spawn=0.10, paytable×3.5 (1k/200)                  → base 98.70%, bonus 102%
 #   iter 5: spawn=0.10 + heavy-tail mults (1k/200)             → median 11x, 1% hit 50k cap (too frequent)
 #   iter 6: spawn=0.30 + refined tail + 50k wincap (50k/5k)    → measuring
-MULTIPLIER_SPAWN_PROB = 0.03
+MULTIPLIER_SPAWN_PROB = 0.008  # C2-G iter 18: stickies drive median, mults add the right-tail only
 
 
 class GameExecutables(GameCalculations):
@@ -149,6 +146,53 @@ class GameExecutables(GameCalculations):
         +5 spins (GDD §5)."""
         if getattr(self, "spin_destruction_count", 0) >= DESTRUCTION_TRIGGER_THRESHOLD:
             self.tot_fs += FREESPINS_AWARDED_ON_RETRIGGER
+
+    # ---- Sticky dynamites (C2-G, GDD §5) ----
+    # During free spins, any DS or DB that doesn't form a winning cluster
+    # in a given spin persists onto the next free spin's board. Over 10
+    # spins (or 15 with retrigger), dynamites accumulate until enough land
+    # together to cluster — then the explosion lifts the freegame total.
+    # This is the design feature that lifts the bonus median toward ~50x.
+
+    def _capture_sticky_dynamites(self) -> None:
+        """Scan the final post-cascade board for un-exploded dynamites and
+        persist their positions to self.sticky_dynamites. Only runs in
+        the freegame type. Called from set_end_tumble_event."""
+        if self.gametype != self.config.freegame_type:
+            return
+        survivors = []
+        for r in range(self.config.num_reels):
+            for c in range(self.config.num_rows[r]):
+                sym = self.board[r][c]
+                if sym.name in ("DS", "DB") and not sym.explode:
+                    survivors.append((r, c, sym.name))
+        self.sticky_dynamites = survivors
+
+    def _apply_sticky_dynamites(self) -> None:
+        """Overlay saved stickies onto the freshly drawn freespin board.
+        Only runs in the freegame type. Called from draw_board."""
+        stickies = getattr(self, "sticky_dynamites", None)
+        if not stickies:
+            return
+        for r, c, name in stickies:
+            if 0 <= r < self.config.num_reels and 0 <= c < self.config.num_rows[r]:
+                self.board[r][c] = self.create_symbol(name)
+
+    def set_end_tumble_event(self) -> None:
+        """End-of-cascade hook. Captures sticky dynamites for the next FS."""
+        super().set_end_tumble_event()
+        self._capture_sticky_dynamites()
+
+    def draw_board(self, emit_event: bool = True, trigger_symbol: str = "scatter") -> None:
+        """Draw a fresh board, then (in freegame only) overlay sticky
+        dynamites from the previous freespin's final state. Suppress the
+        usual reveal_event from super().draw_board so the books capture
+        the post-overlay board state."""
+        super().draw_board(emit_event=False, trigger_symbol=trigger_symbol)
+        if self.gametype == self.config.freegame_type:
+            self._apply_sticky_dynamites()
+        if emit_event:
+            reveal_event(self)
 
     def end_freespin(self) -> None:
         """BANG: apply collected TNT-Crate multipliers to the freegame total
