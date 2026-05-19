@@ -4,6 +4,13 @@ from game_events import update_grid_mult_event
 from src.events.events import update_freespin_event
 
 
+# BANG bonus trigger: destroy this many cells in one spin's full cascade
+# chain to trigger the free-spins round. See GDD §5.
+DESTRUCTION_TRIGGER_THRESHOLD = 50
+FREESPINS_AWARDED_ON_TRIGGER = 10
+FREESPINS_AWARDED_ON_RETRIGGER = 5
+
+
 class GameExecutables(GameCalculations):
     """BANG game-specific orchestration.
 
@@ -13,8 +20,10 @@ class GameExecutables(GameCalculations):
       evaluate_clusters_with_grid. Grid-position multipliers are not
       used; cluster pays are flat (subject to global_multiplier).
     - A per-spin destruction counter (self.spin_destruction_count) is
-      accumulated from each cluster-eval pass — this feeds the 50-cell
-      bonus trigger (C2-B will hook into check_fs_condition).
+      accumulated from each cluster-eval pass.
+    - check_fs_condition / check_freespin_entry / update_freespin_amount
+      / update_fs_retrigger_amt are overridden to trigger free spins
+      from destruction count instead of scatter count.
     """
 
     def reset_grid_mults(self):
@@ -30,10 +39,6 @@ class GameExecutables(GameCalculations):
         the inherited gamestate.run_freespin can still call it."""
         if self.win_data.get("totalWin", 0) > 0:
             update_grid_mult_event(self)
-
-    def reset_spin_destruction_count(self):
-        """Reset the per-spin destruction counter at the start of a spin."""
-        self.spin_destruction_count = 0
 
     def get_clusters_update_wins(self):
         """Find clusters, pay them, resolve dynamite area-effects, and
@@ -62,3 +67,41 @@ class GameExecutables(GameCalculations):
         self.win_manager.reset_spin_win()
         self.tumblewin_mult = 0
         self.win_data = {}
+        # Reset destruction counter so each free-spin can independently
+        # re-trigger when it hits the threshold.
+        self.spin_destruction_count = 0
+
+    # ---- Destruction-count freespin trigger (replaces scatter-based) ----
+
+    def check_fs_condition(self, scatter_key: str = "scatter") -> bool:
+        """BANG: bonus triggers when ≥50 cells were destroyed in this spin's
+        full cascade chain (see GDD §5). Replaces the SDK's scatter-count check.
+        """
+        if (
+            getattr(self, "spin_destruction_count", 0) >= DESTRUCTION_TRIGGER_THRESHOLD
+            and not self.repeat
+        ):
+            return True
+        return False
+
+    def check_freespin_entry(self, scatter_key: str = "scatter") -> bool:
+        """BANG: allow freespin entry when either the destruction-count
+        threshold fired this spin OR the current bet-mode distribution sets
+        force_freegame (used by bonus buy)."""
+        if getattr(self, "spin_destruction_count", 0) >= DESTRUCTION_TRIGGER_THRESHOLD:
+            return True
+        if self.get_current_distribution_conditions().get("force_freegame"):
+            return True
+        self.repeat = True
+        return False
+
+    def update_freespin_amount(self, scatter_key: str = "scatter") -> None:
+        """BANG: trigger awards a flat 10 free spins (GDD §5). Doesn't scale
+        with destruction count — the 50-cell threshold is binary."""
+        self.tot_fs = FREESPINS_AWARDED_ON_TRIGGER
+
+    def update_fs_retrigger_amt(self, scatter_key: str = "scatter") -> None:
+        """BANG: hitting the 50-cell threshold during a free spin re-triggers
+        +5 spins (GDD §5)."""
+        if getattr(self, "spin_destruction_count", 0) >= DESTRUCTION_TRIGGER_THRESHOLD:
+            self.tot_fs += FREESPINS_AWARDED_ON_RETRIGGER

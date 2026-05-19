@@ -12,6 +12,10 @@ class GameStateOverride(GameExecutables):
         super().reset_book()
         # Reset parameters relevant to local game only
         self.tumble_win = 0
+        # BANG: per-spin destruction counter resets at the start of every spin
+        # (both base and free). Accumulated across the cascade by
+        # get_clusters_update_wins; consumed by check_fs_condition.
+        self.spin_destruction_count = 0
 
     def reset_fs_spin(self):
         super().reset_fs_spin()
