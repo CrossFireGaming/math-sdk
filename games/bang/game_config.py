@@ -94,9 +94,17 @@ class GameConfig(Config):
 
         self.include_padding = True
 
-        # No wilds, no scatters in BANG. Empty lists keep the SDK's cluster
-        # detection happy (it checks the "wild" attribute on each cell).
-        self.special_symbols = {"wild": [], "scatter": []}
+        # Dynamites are wilds — they substitute for any cluster symbol AND
+        # still trigger their area-effect destruction when in a winning
+        # cluster (see evaluate_clusters_with_dynamite for the per-cell
+        # detection). DB forcing on feature spins happens via custom
+        # placement in game_executables.draw_board (the SDK's
+        # force_special_board only works with Symbol-slot attributes
+        # like "wild" or "scatter").
+        self.special_symbols = {
+            "wild": ["DS", "DB"],
+            "scatter": [],
+        }
 
         # Placeholder scatter triggers — unreachable on BANG reels (no 'S' symbol).
         # Bonus entry happens via force_freegame in the bonus BetMode below.
@@ -121,7 +129,15 @@ class GameConfig(Config):
         for r, f in reels.items():
             self.reels[r] = self.read_reels_csv(os.path.join(self.reels_path, f))
 
-        mode_maxwins = {"base": self.wincap, "bonus": self.wincap}
+        mode_maxwins = {"base": self.wincap, "feature": self.wincap}
+
+        # Shared reel_weights pattern — every distribution needs both
+        # basegame and freegame entries because organic bonus triggers
+        # (destruction count >= 50) can flip gametype mid-spin.
+        _shared_reel_weights = {
+            self.basegame_type: {"BR0": 1},
+            self.freegame_type: {"FR0": 1},
+        }
 
         self.bet_modes = [
             BetMode(
@@ -132,20 +148,13 @@ class GameConfig(Config):
                 auto_close_disabled=False,
                 is_feature=True,
                 is_buybonus=False,
-                # C2-E iter 2: pure base distribution for clean RTP signal.
-                # wincap (quota 0.001 → forces 10000× hits into the average
-                # at 0.1% rate, swamps RTP) and freegame-in-base (5% rate
-                # contributes huge bonus-buy-equivalent wins) both pulled
-                # back out — they'll come back when the optimizer is on (C2-F)
-                # to balance RTP properly. For now base = 70% zero / 30%
-                # paying spins, which matches GDD §1 hit-freq target.
                 distributions=[
                     Distribution(
                         criteria="0",
                         quota=0.7,
                         win_criteria=0.0,
                         conditions={
-                            "reel_weights": {self.basegame_type: {"BR0": 1}},
+                            "reel_weights": _shared_reel_weights,
                             "scatter_triggers": {0: 1},
                             "force_wincap": False,
                             "force_freegame": False,
@@ -155,7 +164,7 @@ class GameConfig(Config):
                         criteria="basegame",
                         quota=0.3,
                         conditions={
-                            "reel_weights": {self.basegame_type: {"BR0": 1}},
+                            "reel_weights": _shared_reel_weights,
                             "scatter_triggers": {0: 1},
                             "force_wincap": False,
                             "force_freegame": False,
@@ -163,30 +172,33 @@ class GameConfig(Config):
                     ),
                 ],
             ),
+            # FEATURE SPIN (replaces bonus buy per design pivot):
+            # A single spin that costs more than a regular bet, lands 5-25
+            # Big Dynamites on the board, and has a *chance* of triggering
+            # the free-spins round via the destruction count crossing 50.
+            # No guaranteed free spins — the player paid for the bombs,
+            # not for free spins directly. Tome-of-Madness-style.
             BetMode(
-                name="bonus",
-                cost=100.0,
-                rtp=0.9700,
-                max_win=mode_maxwins["bonus"],
+                name="feature",
+                cost=20.0,
+                rtp=self.rtp,
+                max_win=mode_maxwins["feature"],
                 auto_close_disabled=False,
                 is_feature=True,
-                is_buybonus=True,
-                # Bonus buy: every sim forces a free-spins round (C2-B's
-                # check_fs_condition honors force_freegame, so each bonus sim
-                # immediately enters the 10-FS bonus regardless of the spin's
-                # destruction count).
+                is_buybonus=False,
                 distributions=[
                     Distribution(
-                        criteria="freegame",
+                        criteria="feature",
                         quota=1.0,
                         conditions={
-                            "reel_weights": {
-                                self.basegame_type: {"BR0": 1},
-                                self.freegame_type: {"FR0": 1},
-                            },
+                            "reel_weights": _shared_reel_weights,
                             "scatter_triggers": {0: 1},
+                            # Number of Big Dynamites forced onto the
+                            # feature-spin board (sampled by weight).
+                            # 5 = most common, 25 = rarest big hit.
+                            "big_bomb_triggers": {5: 40, 8: 30, 12: 15, 16: 8, 20: 5, 25: 2},
                             "force_wincap": False,
-                            "force_freegame": True,
+                            "force_freegame": False,
                         },
                     ),
                 ],

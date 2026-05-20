@@ -19,8 +19,8 @@ if __name__ == "__main__":
     profiling = False
 
     num_sim_args = {
-        "base": int(1e6),
-        "bonus": int(1e5),
+        "base": int(500),
+        "feature": int(200),
     }
 
     # Optimization off during scaffolding — runs faster, and tuning the
@@ -33,7 +33,7 @@ if __name__ == "__main__":
         # while compression=False. Re-enable for the first production run.
         "run_format_checks": False,
     }
-    target_modes = ["base", "bonus"]
+    target_modes = ["base", "feature"]
 
     config = GameConfig()
     gamestate = GameState(config)

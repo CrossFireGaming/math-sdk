@@ -1,13 +1,20 @@
 """BANG game calculations — Big/Small Dynamite area-effect resolution.
 
-Replaces the cluster sample's grid-multiplier mechanic with BANG's
-dynamite-driven destruction:
+Dynamites (DS, DB) are wilds — they substitute for any cluster symbol so
+a cluster of "4 H1 + 1 DS" pays as a 5-H1 cluster. Each dynamite cell in
+any winning cluster STILL triggers its area-effect destruction:
 
-- DS clusters (Small Dynamite, 5+ connected): each cluster member destroys
-  its row AND column (plus pattern, up to 9 cells per member). DH/DV
-  directional variants are deferred — see GDD §2.1.
-- DB clusters (Big Dynamite, 5+ connected): each cluster member destroys
-  a 3x3 area centered on itself, clipped to grid edges.
+- DS in a winning cluster: destroys its row AND column (plus pattern).
+- DB in a winning cluster: destroys a 3x3 area centered on it, clipped
+  to grid edges.
+
+The detection is per-cell (board[r][c].name) — not per-cluster-symbol —
+because dynamites now ride along inside non-dynamite clusters.
+
+Pure-dynamite clusters (5+ adjacent DS/DB with no non-wild neighbours)
+don't form under the standard SDK cluster algorithm (wilds aren't valid
+cluster starts). That's intended: those dynamites stay on the board
+sticky-style until a non-wild cluster forms around them.
 
 Destruction count is collected into return_data["destructionCount"] for
 the 50-cell bonus trigger (wired in game_executables.py).
@@ -64,18 +71,18 @@ class GameCalculations(Executables):
                     }
                 )
 
-                # Standard cluster destruction
+                # Per-cell processing: mark cluster cells exploded AND
+                # trigger dynamite area-effects based on the actual cell
+                # symbol (which may be DS/DB acting as a wild inside a
+                # non-dynamite cluster).
                 for r, c in cluster:
                     if not board[r][c].explode:
                         board[r][c].explode = True
                         destruction_count += 1
 
-                # Dynamite area-effects
-                if sym == "DS":
-                    # Plus pattern: each Small Dynamite destroys its row AND column.
-                    # C2.x will split into DH = row only / DV = column only variants
-                    # once the board cell type supports a directional attribute.
-                    for r, c in cluster:
+                    actual = board[r][c].name
+                    if actual == "DS":
+                        # Plus pattern: row AND column destruction.
                         for rr_idx in range(len(board[r])):
                             if not board[r][rr_idx].explode:
                                 board[r][rr_idx].explode = True
@@ -84,9 +91,8 @@ class GameCalculations(Executables):
                             if not board[cc_idx][c].explode:
                                 board[cc_idx][c].explode = True
                                 destruction_count += 1
-                elif sym == "DB":
-                    # 3x3 area centered on each Big Dynamite, clipped to grid edges
-                    for r, c in cluster:
+                    elif actual == "DB":
+                        # 3x3 area centered on the DB, clipped to grid edges.
                         for dr in (-1, 0, 1):
                             for dc in (-1, 0, 1):
                                 rr, cc = r + dr, c + dc

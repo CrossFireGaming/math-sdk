@@ -1,3 +1,5 @@
+import random
+
 from game_calculations import GameCalculations
 from src.calculations.cluster import Cluster
 from src.calculations.statistics import get_random_outcome
@@ -168,6 +170,24 @@ class GameExecutables(GameCalculations):
                     survivors.append((r, c, sym.name))
         self.sticky_dynamites = survivors
 
+    def _force_big_bombs(self, num_bombs: int) -> None:
+        """Randomly replace N distinct cells on the current board with DB.
+        Used by the feature spin (criteria='feature') to land 5-25 Big
+        Dynamites at draw time. The SDK's force_special_board only
+        recognises Symbol-slot attributes like "wild"/"scatter"; "big_bomb"
+        is BANG-specific so we place cells directly.
+        """
+        total_cells = sum(self.config.num_rows[r] for r in range(self.config.num_reels))
+        num_bombs = min(num_bombs, total_cells)
+        all_positions = [
+            (r, c)
+            for r in range(self.config.num_reels)
+            for c in range(self.config.num_rows[r])
+        ]
+        random.shuffle(all_positions)
+        for r, c in all_positions[:num_bombs]:
+            self.board[r][c] = self.create_symbol("DB")
+
     def _apply_sticky_dynamites(self) -> None:
         """Overlay saved stickies onto the freshly drawn freespin board.
         Only runs in the freegame type. Called from draw_board."""
@@ -184,13 +204,41 @@ class GameExecutables(GameCalculations):
         self._capture_sticky_dynamites()
 
     def draw_board(self, emit_event: bool = True, trigger_symbol: str = "scatter") -> None:
-        """Draw a fresh board, then (in freegame only) overlay sticky
-        dynamites from the previous freespin's final state. Suppress the
-        usual reveal_event from super().draw_board so the books capture
-        the post-overlay board state."""
+        """Draw a fresh board, then apply special-mode overlays.
+
+        - Feature spin (criteria=="feature", base game): draw normal,
+          then force N Big Dynamites onto the board via
+          force_special_board("big_bomb", N). N is sampled from the
+          per-distribution big_bomb_triggers weight table.
+        - Free spins (gametype=freegame): draw normal, then overlay the
+          previous freespin's surviving sticky dynamites.
+
+        Suppress super()'s reveal_event so the books capture the board
+        AFTER our overlays, not the bare draw.
+        """
+        # Feature spin path
+        if (
+            getattr(self, "criteria", None) == "feature"
+            and self.gametype == self.config.basegame_type
+        ):
+            self.create_board_reelstrips()
+            triggers = self.get_current_distribution_conditions().get(
+                "big_bomb_triggers", {5: 1}
+            )
+            num_bombs = get_random_outcome(triggers)
+            self._force_big_bombs(num_bombs)
+            if emit_event:
+                reveal_event(self)
+            return
+
+        # Default path (base spins and free spins)
         super().draw_board(emit_event=False, trigger_symbol=trigger_symbol)
-        if self.gametype == self.config.freegame_type:
-            self._apply_sticky_dynamites()
+        # Sticky dynamites disabled while we tune the wild mechanic — wilds
+        # already inflate cluster formation considerably, and stickies on top
+        # produced 1600-2800% RTP in the first wild test. Re-enable with
+        # rebalanced reels once wilds are tuned to sensible RTP alone.
+        # if self.gametype == self.config.freegame_type:
+        #     self._apply_sticky_dynamites()
         if emit_event:
             reveal_event(self)
 

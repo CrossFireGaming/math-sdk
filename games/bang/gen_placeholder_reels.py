@@ -44,23 +44,21 @@ def write_csv(path: str, rows: list[list[str]]) -> None:
 def main() -> None:
     os.makedirs(REELS_DIR, exist_ok=True)
 
-    # Base reel — gems dominate, dynamites at scaffold-target rates
-    # (Small Dyn ~8%, Big Dyn ~2% per GDD §11 #2 recommendation).
+    # Base reel — dynamite density reduced since wilds substitute for any
+    # symbol (so even rare DS/DB contribute to many clusters). Iter pre-wild
+    # had DS 8%, DB 2%; iter wild starts at DS 3%, DB 0.5% — will tune.
     base_dist = {
-        "L1": 17, "L2": 17, "L3": 17, "L4": 17,
-        "H4": 8,  "H3": 6,  "H2": 5,  "H1": 3,
-        "DS": 8,  "DB": 2,
+        "L1": 18, "L2": 18, "L3": 18, "L4": 18,
+        "H4": 9,  "H3": 7,  "H2": 5,  "H1": 3.5,
+        "DS": 3,  "DB": 0.5,
     }
 
-    # Free-spins reel — moderate dynamite density (C2-G with sticky
-    # mechanic). Stickies accumulate dynamites across spins, so we don't
-    # need a high per-spin density; too high (22/8) blew bonus RTP to 737%
-    # because dynamites flood the board within 3-4 free spins. Tuned to
-    # let stickies build over 5-8 spins for a satisfying buildup.
+    # Free-spins reel — slightly more dynamite than base; with wilds doing
+    # the substitution work, density doesn't need to be huge.
     free_dist = {
-        "L1": 12, "L2": 12, "L3": 12, "L4": 12,
-        "H4": 13, "H3": 10, "H2": 8, "H1": 5,
-        "DS": 13, "DB": 3,
+        "L1": 15, "L2": 15, "L3": 15, "L4": 15,
+        "H4": 10, "H3": 8, "H2": 6, "H1": 4,
+        "DS": 6, "DB": 1,
     }
 
     # Forced-max-win reel — heavy on Big Dyn + high pays to make chain-detonation

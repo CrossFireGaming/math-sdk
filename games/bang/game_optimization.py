@@ -64,31 +64,19 @@ class OptimizationSetup:
                     bias_weights=[0.4],
                 ).return_dict(),
             },
-            "bonus": {
+            "feature": {
                 "conditions": {
-                    "wincap": ConstructConditions(
-                        rtp=0.01, av_win=wincaps["bonus"], search_conditions=wincaps["bonus"]
-                    ).return_dict(),
-                    "freegame": ConstructConditions(rtp=0.96, hr="x").return_dict(),
+                    # Feature spin is a single forced-bombs spin. opt_params
+                    # sums to 0.97 to match BetMode.rtp; the optimizer would
+                    # tune this in C2-F (not running today).
+                    "feature": ConstructConditions(rtp=0.97, hr="x").return_dict(),
                 },
                 "scaling": ConstructScaling(
                     [
                         {
-                            "criteria": "freegame",
-                            "scale_factor": 0.9,
-                            "win_range": (20, 50),
-                            "probability": 1.0,
-                        },
-                        {
-                            "criteria": "freegame",
-                            "scale_factor": 0.8,
-                            "win_range": (1000, 2000),
-                            "probability": 1.0,
-                        },
-                        {
-                            "criteria": "freegame",
-                            "scale_factor": 1.2,
-                            "win_range": (3000, 4000),
+                            "criteria": "feature",
+                            "scale_factor": 1.0,
+                            "win_range": (50, 250),
                             "probability": 1.0,
                         },
                     ]
