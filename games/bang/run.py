@@ -15,14 +15,14 @@ if __name__ == "__main__":
     num_threads = 4
     rust_threads = 4
     batching_size = 10000
-    compression = False
+    compression = True  # zstd-compress books to save disk at 1M+ sims
     profiling = False
 
-    # 1M base + 100k feature for proper RTP convergence across "many
-    # many spins" per Eddie. ~10 min wall-clock with 4 threads.
+    # FINAL CONFIDENCE: 10M base / 1M feature for 0.1% precision RTP.
+    # ~60min wall-clock with 4 threads.
     num_sim_args = {
-        "base": int(1e6),
-        "feature": int(1e5),
+        "base": int(1e7),
+        "feature": int(1e6),
     }
 
     # Optimization off during scaffolding — runs faster, and tuning the

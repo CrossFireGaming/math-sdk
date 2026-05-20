@@ -196,9 +196,9 @@ class GameConfig(Config):
                             # player gets a chance at bonus. Pulled bomb
                             # counts down from 5-25 to 3-15 — wilds make
                             # each bomb very impactful so we don't need many.
-                            # Tuned to land feature RTP ~97.7% (matching
-                            # base). E[bombs] ≈ 7.3.
-                            "big_bomb_triggers": {5: 30, 6: 25, 7: 20, 10: 15, 13: 7, 18: 3},
+                            # Iter C: E[bombs]≈7.90 (split iter A 8.05→103%
+                            # and iter B 7.66→88% for target 97.7%).
+                            "big_bomb_triggers": {5: 25, 6: 25, 8: 22, 10: 15, 13: 9, 18: 4},
                             "force_wincap": False,
                             "force_freegame": False,
                         },
