@@ -10,6 +10,8 @@ from game_events import update_grid_mult_event
 # BANG bonus trigger: destroy this many cells in one spin's full cascade
 # chain to trigger the free-spins round. See GDD §5.
 DESTRUCTION_TRIGGER_THRESHOLD = 50
+# 10 free spins gives the cap-class hits we want at 1 in ~30k.
+# Paytable scaled to compensate so total RTP lands near 97.7%.
 FREESPINS_AWARDED_ON_TRIGGER = 10
 FREESPINS_AWARDED_ON_RETRIGGER = 5
 

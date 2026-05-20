@@ -18,9 +18,11 @@ if __name__ == "__main__":
     compression = False
     profiling = False
 
+    # 1M base + 100k feature for proper RTP convergence across "many
+    # many spins" per Eddie. ~10 min wall-clock with 4 threads.
     num_sim_args = {
-        "base": int(1e5),
-        "feature": int(2e4),
+        "base": int(1e6),
+        "feature": int(1e5),
     }
 
     # Optimization off during scaffolding — runs faster, and tuning the
