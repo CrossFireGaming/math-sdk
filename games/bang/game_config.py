@@ -53,42 +53,43 @@ class GameConfig(Config):
         # the dynamite explosions be the hero moments.
         t1, t2, t3, t4, t5 = (5, 5), (6, 7), (8, 10), (11, 14), (15, 25)
 
-        # C2-E iter 3: paytable scaled 3.5x from the original GDD draft.
-        # iter 2 (original draft) measured base RTP at 28.20% across 1000 sims;
-        # target is 96.5%, so multiplied uniformly by 3.4 (rounded to 3.5 for
-        # cleaner numbers). C2-F (proper optimizer-driven tuning) will
-        # rebalance properly — this is the placeholder until then.
+        # C2-H paytable: scaled 0.5x from iter-3 since dynamites are now
+        # wilds (they substitute, lifting effective cluster sizes and
+        # cascade chains, doubling raw base wins). DS/DB pay rows are
+        # unreachable in practice (wilds aren't valid cluster starts) but
+        # kept for safety. Will retune in C2-I once feature spin balance is
+        # right.
         pay_group = {
             # H1 — Safe / Vault (top pay)
-            (t1, "H1"): 21.0, (t2, "H1"): 52.5, (t3, "H1"): 140.0,
-            (t4, "H1"): 350.0, (t5, "H1"): 1750.0,
+            (t1, "H1"): 10.5, (t2, "H1"): 26.0, (t3, "H1"): 70.0,
+            (t4, "H1"): 175.0, (t5, "H1"): 875.0,
             # H2 — Gold Bar
-            (t1, "H2"): 10.5, (t2, "H2"): 28.0, (t3, "H2"): 70.0,
-            (t4, "H2"): 175.0, (t5, "H2"): 875.0,
+            (t1, "H2"): 5.25, (t2, "H2"): 14.0, (t3, "H2"): 35.0,
+            (t4, "H2"): 87.5, (t5, "H2"): 435.0,
             # H3 — Sheriff Badge
-            (t1, "H3"): 5.6, (t2, "H3"): 14.0, (t3, "H3"): 35.0,
-            (t4, "H3"): 87.5, (t5, "H3"): 350.0,
+            (t1, "H3"): 2.8, (t2, "H3"): 7.0, (t3, "H3"): 17.5,
+            (t4, "H3"): 44.0, (t5, "H3"): 175.0,
             # H4 — Horseshoe
-            (t1, "H4"): 3.5, (t2, "H4"): 8.75, (t3, "H4"): 21.0,
-            (t4, "H4"): 52.5, (t5, "H4"): 210.0,
+            (t1, "H4"): 1.75, (t2, "H4"): 4.4, (t3, "H4"): 10.5,
+            (t4, "H4"): 26.0, (t5, "H4"): 105.0,
             # L1 — Diamond
-            (t1, "L1"): 1.4, (t2, "L1"): 3.5, (t3, "L1"): 8.75,
-            (t4, "L1"): 21.0, (t5, "L1"): 70.0,
+            (t1, "L1"): 0.7, (t2, "L1"): 1.75, (t3, "L1"): 4.4,
+            (t4, "L1"): 10.5, (t5, "L1"): 35.0,
             # L2 — Heart
-            (t1, "L2"): 1.4, (t2, "L2"): 3.5, (t3, "L2"): 8.75,
-            (t4, "L2"): 21.0, (t5, "L2"): 70.0,
+            (t1, "L2"): 0.7, (t2, "L2"): 1.75, (t3, "L2"): 4.4,
+            (t4, "L2"): 10.5, (t5, "L2"): 35.0,
             # L3 — Club
-            (t1, "L3"): 2.1, (t2, "L3"): 5.25, (t3, "L3"): 14.0,
-            (t4, "L3"): 35.0, (t5, "L3"): 105.0,
+            (t1, "L3"): 1.05, (t2, "L3"): 2.6, (t3, "L3"): 7.0,
+            (t4, "L3"): 17.5, (t5, "L3"): 52.5,
             # L4 — Spade
-            (t1, "L4"): 2.1, (t2, "L4"): 5.25, (t3, "L4"): 14.0,
-            (t4, "L4"): 35.0, (t5, "L4"): 105.0,
-            # DS — Small Dynamite
-            (t1, "DS"): 7.0, (t2, "DS"): 17.5, (t3, "DS"): 42.0,
-            (t4, "DS"): 105.0, (t5, "DS"): 420.0,
-            # DB — Big Dynamite
-            (t1, "DB"): 17.5, (t2, "DB"): 42.0, (t3, "DB"): 105.0,
-            (t4, "DB"): 280.0, (t5, "DB"): 1050.0,
+            (t1, "L4"): 1.05, (t2, "L4"): 2.6, (t3, "L4"): 7.0,
+            (t4, "L4"): 17.5, (t5, "L4"): 52.5,
+            # DS — unreachable (wilds aren't cluster starts), kept for safety
+            (t1, "DS"): 3.5, (t2, "DS"): 8.75, (t3, "DS"): 21.0,
+            (t4, "DS"): 52.5, (t5, "DS"): 210.0,
+            # DB — unreachable
+            (t1, "DB"): 8.75, (t2, "DB"): 21.0, (t3, "DB"): 52.5,
+            (t4, "DB"): 140.0, (t5, "DB"): 525.0,
         }
         self.paytable = self.convert_range_table(pay_group)
 
@@ -195,8 +196,11 @@ class GameConfig(Config):
                             "scatter_triggers": {0: 1},
                             # Number of Big Dynamites forced onto the
                             # feature-spin board (sampled by weight).
-                            # 5 = most common, 25 = rarest big hit.
-                            "big_bomb_triggers": {5: 40, 8: 30, 12: 15, 16: 8, 20: 5, 25: 2},
+                            # Tone-of-Madness style: paid feature where
+                            # player gets a chance at bonus. Pulled bomb
+                            # counts down from 5-25 to 3-15 — wilds make
+                            # each bomb very impactful so we don't need many.
+                            "big_bomb_triggers": {3: 50, 4: 25, 5: 15, 7: 6, 10: 3, 15: 1},
                             "force_wincap": False,
                             "force_freegame": False,
                         },
