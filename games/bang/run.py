@@ -18,7 +18,7 @@ if __name__ == "__main__":
     compression = True  # zstd-compress books to save disk at 1M+ sims
     profiling = False
 
-    # Tuning iteration at 1M base / 100k feature (~12min).
+    # Smoke iteration at 1M base / 100k feature (~12min) after DS change.
     num_sim_args = {
         "base": int(1e6),
         "feature": int(1e5),

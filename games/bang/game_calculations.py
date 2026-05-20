@@ -82,17 +82,16 @@ class GameCalculations(Executables):
 
                     actual = board[r][c].name
                     if actual == "DS":
-                        # Plus pattern: row AND column destruction.
-                        for rr_idx in range(len(board[r])):
-                            if not board[r][rr_idx].explode:
-                                board[r][rr_idx].explode = True
-                                destruction_count += 1
+                        # Small Dynamite — destroys its row (5 cells max).
+                        # Eddie's design: DS is the Tome-of-Madness "books"
+                        # equivalent (small wild that detonates). DB is
+                        # the bigger 3x3 bomb. DS must be SMALLER than DB.
                         for cc_idx in range(config.num_reels):
                             if not board[cc_idx][c].explode:
                                 board[cc_idx][c].explode = True
                                 destruction_count += 1
                     elif actual == "DB":
-                        # 3x3 area centered on the DB, clipped to grid edges.
+                        # Big Dynamite — 3x3 area centered, clipped to grid.
                         for dr in (-1, 0, 1):
                             for dc in (-1, 0, 1):
                                 rr, cc = r + dr, c + dc
