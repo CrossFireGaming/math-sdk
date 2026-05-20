@@ -19,8 +19,8 @@ if __name__ == "__main__":
     profiling = False
 
     num_sim_args = {
-        "base": int(500),
-        "feature": int(200),
+        "base": int(1e5),
+        "feature": int(2e4),
     }
 
     # Optimization off during scaffolding — runs faster, and tuning the

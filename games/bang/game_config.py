@@ -37,9 +37,9 @@ class GameConfig(Config):
         self.working_name = "BANG"
         self.wincap = 50000.0
         self.win_type = "cluster"
-        # C1 placeholder: 0.9700 to match the inherited opt_params condition sum.
-        # GDD target is 0.9650 base / 0.9700 bonus — will be enforced in C2 by
-        # tuning games/bang/game_optimization.py condition RTPs to sum to 0.965.
+        # Long-term target is Tome of Hades's 97.70% RTP. Kept at 0.97
+        # here to match the inherited opt_params sum; opt_params will be
+        # rebalanced to 0.977 when we're in the right band naturally.
         self.rtp = 0.9700
         self.construct_paths()
 
@@ -47,49 +47,45 @@ class GameConfig(Config):
         self.num_reels = 5
         self.num_rows = [5] * self.num_reels
 
-        # Cluster-size tiers — minimum cluster is 5 (matches SDK sample convention).
-        # 4-min was tried first; produced unbounded cascades on 5x5 with our reel
-        # composition. 5-min on 5x5 hits the target high-volatility band and lets
-        # the dynamite explosions be the hero moments.
-        t1, t2, t3, t4, t5 = (5, 5), (6, 7), (8, 10), (11, 14), (15, 25)
+        # 4-min cluster + 6 tiers to match Tome of Hades structure:
+        # 4-5 / 6-7 / 8-11 / 12-15 / 16-19 / 20-25 (full-board on 5x5 is 25).
+        # The "20-25" top tier is where the big wins land.
+        t1, t2, t3, t4, t5, t6 = (4, 5), (6, 7), (8, 11), (12, 15), (16, 19), (20, 25)
 
-        # C2-H paytable: scaled 0.5x from iter-3 since dynamites are now
-        # wilds (they substitute, lifting effective cluster sizes and
-        # cascade chains, doubling raw base wins). DS/DB pay rows are
-        # unreachable in practice (wilds aren't valid cluster starts) but
-        # kept for safety. Will retune in C2-I once feature spin balance is
-        # right.
+        # Paytable: Tome of Hades shape (tiny small-cluster pays, big top
+        # tier), scaled up so base RTP lands in target band given how
+        # often 4-cluster wins fire with wilds + 4-min cluster.
         pay_group = {
             # H1 — Safe / Vault (top pay)
-            (t1, "H1"): 10.5, (t2, "H1"): 26.0, (t3, "H1"): 70.0,
-            (t4, "H1"): 175.0, (t5, "H1"): 875.0,
+            (t1, "H1"): 2.11, (t2, "H1"): 5.05, (t3, "H1"): 12.64,
+            (t4, "H1"): 33.7, (t5, "H1"): 105.3, (t6, "H1"): 421.2,
             # H2 — Gold Bar
-            (t1, "H2"): 5.25, (t2, "H2"): 14.0, (t3, "H2"): 35.0,
-            (t4, "H2"): 87.5, (t5, "H2"): 435.0,
+            (t1, "H2"): 1.47, (t2, "H2"): 3.16, (t3, "H2"): 7.58,
+            (t4, "H2"): 21.06, (t5, "H2"): 54.76, (t6, "H2"): 252.72,
             # H3 — Sheriff Badge
-            (t1, "H3"): 2.8, (t2, "H3"): 7.0, (t3, "H3"): 17.5,
-            (t4, "H3"): 44.0, (t5, "H3"): 175.0,
+            (t1, "H3"): 0.84, (t2, "H3"): 2.11, (t3, "H3"): 5.05,
+            (t4, "H3"): 12.64, (t5, "H3"): 33.7, (t6, "H3"): 126.36,
             # H4 — Horseshoe
-            (t1, "H4"): 1.75, (t2, "H4"): 4.4, (t3, "H4"): 10.5,
-            (t4, "H4"): 26.0, (t5, "H4"): 105.0,
+            (t1, "H4"): 0.59, (t2, "H4"): 1.47, (t3, "H4"): 3.37,
+            (t4, "H4"): 7.58, (t5, "H4"): 21.06, (t6, "H4"): 75.82,
             # L1 — Diamond
-            (t1, "L1"): 0.7, (t2, "L1"): 1.75, (t3, "L1"): 4.4,
-            (t4, "L1"): 10.5, (t5, "L1"): 35.0,
+            (t1, "L1"): 0.3, (t2, "L1"): 0.63, (t3, "L1"): 1.47,
+            (t4, "L1"): 3.37, (t5, "L1"): 8.42, (t6, "L1"): 29.48,
             # L2 — Heart
-            (t1, "L2"): 0.7, (t2, "L2"): 1.75, (t3, "L2"): 4.4,
-            (t4, "L2"): 10.5, (t5, "L2"): 35.0,
+            (t1, "L2"): 0.3, (t2, "L2"): 0.63, (t3, "L2"): 1.47,
+            (t4, "L2"): 3.37, (t5, "L2"): 8.42, (t6, "L2"): 29.48,
             # L3 — Club
-            (t1, "L3"): 1.05, (t2, "L3"): 2.6, (t3, "L3"): 7.0,
-            (t4, "L3"): 17.5, (t5, "L3"): 52.5,
+            (t1, "L3"): 0.34, (t2, "L3"): 0.76, (t3, "L3"): 1.89,
+            (t4, "L3"): 5.05, (t5, "L3"): 12.64, (t6, "L3"): 46.33,
             # L4 — Spade
-            (t1, "L4"): 1.05, (t2, "L4"): 2.6, (t3, "L4"): 7.0,
-            (t4, "L4"): 17.5, (t5, "L4"): 52.5,
-            # DS — unreachable (wilds aren't cluster starts), kept for safety
-            (t1, "DS"): 3.5, (t2, "DS"): 8.75, (t3, "DS"): 21.0,
-            (t4, "DS"): 52.5, (t5, "DS"): 210.0,
-            # DB — unreachable
-            (t1, "DB"): 8.75, (t2, "DB"): 21.0, (t3, "DB"): 52.5,
-            (t4, "DB"): 140.0, (t5, "DB"): 525.0,
+            (t1, "L4"): 0.34, (t2, "L4"): 0.76, (t3, "L4"): 1.89,
+            (t4, "L4"): 5.05, (t5, "L4"): 12.64, (t6, "L4"): 46.33,
+            # DS — wild, unreachable as cluster start (kept for safety)
+            (t1, "DS"): 0.84, (t2, "DS"): 2.11, (t3, "DS"): 5.05,
+            (t4, "DS"): 12.64, (t5, "DS"): 33.7, (t6, "DS"): 126.36,
+            # DB — wild, unreachable
+            (t1, "DB"): 1.47, (t2, "DB"): 3.16, (t3, "DB"): 7.58,
+            (t4, "DB"): 21.06, (t5, "DB"): 54.76, (t6, "DB"): 252.72,
         }
         self.paytable = self.convert_range_table(pay_group)
 
